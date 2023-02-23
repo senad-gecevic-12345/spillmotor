@@ -23,7 +23,9 @@ inline btVector3 to_btVector3(glm::vec3 vec){ return btVector3{btScalar(vec.x),b
 
 namespace Controller{
 
-
+    // TODO: make this virtual and store it as a base for the representations
+    // then can easily implement gameplay code
+    // virtual destructor
     class Character{
     public:
         entt::entity e;
@@ -39,6 +41,10 @@ namespace Controller{
         }
 
         void copy_over(entt::registry& registry);
+
+
+        // this down own the camera so not that good
+        virtual void update(const NewCamera::Camera& camera){}
 
         void update_poll_keyboard(btCollisionWorld* collisionWorld, float dt, glm::vec3 vec_forward, glm::vec3 vec_straife){
             if(controller == nullptr)
@@ -100,9 +106,20 @@ namespace Controller{
 
         }
 
-        ~Character();
+        virtual ~Character();
+    };
 
-
+    // TODO: probably reading the file or something for the bullets
+    // and also fix key repeat
+    class ShootingCharacter : public Character{
+        void temp_shoot_bullet(const NewCamera::Camera& camera);
+        virtual void update(const NewCamera::Camera& camera)override{
+            if(PollKeyboard::get().mb_1){
+                temp_shoot_bullet(camera);
+            }
+        }
+        public:
+        ShootingCharacter(entt::entity e, glm::vec3 _position, glm::vec3 _rotation):Character(e, _position, _rotation){}
     };
 
     class ControllerSingleton{
@@ -114,7 +131,6 @@ namespace Controller{
             auto& registry = Registry::get().registry;
             if(character != nullptr)
                 registry.destroy(character->e);
-
             character.reset();
         }
 
@@ -124,6 +140,9 @@ namespace Controller{
         ~ControllerSingleton()=default;
 
         void update(entt::registry& registry, btCollisionWorld* world, float dt, float mouse_x, float mouse_y);
+
+        // TODO: character should be virtual and this func goes there by update
+        // check if bullet has some channels or flags for collision, or perhaps it is just something that shoulb be ignored by custom collision detection in the kinematic character
         
         static ControllerSingleton& get(){
             static ControllerSingleton instance;

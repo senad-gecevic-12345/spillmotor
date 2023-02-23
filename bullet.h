@@ -299,6 +299,11 @@ public:
 public:
 	void init();
 
+public: // temporary memes
+        // also can be buggy if spawn the ball inside something so may need some checks first
+    // need to create a representation first because of rendering    
+    // here a bit problematic to generate a key since this should maybe not manage such things, or they do at bullet entities
+    void temp_throw_ball(glm::vec3 position, glm::vec3 direction, float velocity);
 public:
 	void world_rem_rigid_body(btRigidBody* rb);
     void world_add_rigid_body(btRigidBody* rb);
@@ -309,5 +314,6 @@ public:
 	BulletScene();
 
 };
+
 #endif // BULLET_H_
 

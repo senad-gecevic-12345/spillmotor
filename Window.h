@@ -53,6 +53,13 @@ public:
 	static float get_aspect_ratio();
 };
 
+
+// for event based, just add the button to a list and clear on next frame
+
+struct KeyboardPressFrameList{
+
+};
+
 struct PollKeyboard {
     static PollKeyboard* instance;
     static PollKeyboard& get() {
@@ -64,7 +71,7 @@ struct PollKeyboard {
 	int get_key_state(int key) {
 		return glfwGetKey(Window::get_window(), key);
 	}
-    bool w, a, s, d, space, q, e, z, x, c, up, down, left, right;
+    bool w, a, s, d, x, z, space, q, e, c, up, down, left, right, mb_1, mb_2;
     void update() {
         // lol
         auto check = [](int keycode, bool& key){
@@ -100,6 +107,8 @@ struct PollKeyboard {
 		down = false;
 		left = false;
 		right = false;
+        mb_1 = false;
+        mb_2 = false;
      }
 };
 

@@ -29,6 +29,9 @@
 #include "NewGui.h"
 #include "Actor.h"
 
+// TODO: think the swap interval is implemented wrong, and check that bullet updates 1 / 60
+// seems like the update is correct, but the bullet update may not
+
 namespace CreateRender {
 	void create_render_triangle(Component::Render& render);
 	void create_render(Component::Render& render, Component::Mesh& mesh);
@@ -371,10 +374,14 @@ int main() {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glUseProgram(background_shader_program);
 
+            // wrong
 			World::Clock::get().update();
 			float dt = World::Clock::get().get_dt();
 			float mouse_x = Window::mouse_x;
 			float mouse_y = Window::mouse_y;
+
+            // BULLET UPDATE
+            // check that dt is correct
             Bullet::step_and_copy_over(bullet, dt);
 
 			LifetimeSystem::update(registry.registry);

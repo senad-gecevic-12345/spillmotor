@@ -4,6 +4,17 @@
 #include "Components.h"
 
 namespace Controller{
+    // these are not simulated. wtf
+    void ShootingCharacter::temp_shoot_bullet(const NewCamera::Camera& camera){
+        auto& registry = Registry::get().registry;
+        auto character_position = registry.get<Component::Position>(e);
+
+        auto xz_direction = -glm::normalize(glm::vec3(camera.m_front.x, 0, camera.m_front.z));
+
+        auto pos = glm::vec3(character_position.x, character_position.y, character_position.z) + (xz_direction*5.f);
+        BulletScene::get().temp_throw_ball(pos, xz_direction, 100.f);
+    }
+
     void ControllerSingleton::update(entt::registry& registry, btCollisionWorld* world, float dt, float mouse_x, float mouse_y){
         glm::vec3 out_pos(0,0,0);
         glm::vec3 up(0,1,0);
@@ -12,12 +23,15 @@ namespace Controller{
         front = glm::normalize(front);
         glm::vec3 straife = -glm::cross(front, up);
 
-         if(character != nullptr){ 
-             character->update_poll_keyboard(world, dt, front, straife); 
-             character->copy_over(registry);
-             auto position = registry.get<Component::Position>(character->e); 
-             out_pos = position.pos; 
-         }
+
+
+        if(character != nullptr){ 
+            character->update_poll_keyboard(world, dt, front, straife); 
+            character->copy_over(registry);
+            auto position = registry.get<Component::Position>(character->e); 
+            out_pos = position.pos; 
+            character->update(camera);
+        }
 
         camera.update(mouse_x, mouse_y, out_pos);
     }

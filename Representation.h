@@ -186,11 +186,20 @@ class Sparce{
 
 
 
+// create something in some code, and later something else queries this to manage it
+// or delegates correctly if, for examle, it has a lifetime, then no need to manage probably
+class RepresentationBuffer{
+public:
+    std::vector<RepresentationKey> keys;
+
+};
+
 
 template<typename RepresentationType>
 class RepresentationManager{
 public:
     Sparce<RepresentationType> sparce;
+    RepresentationBuffer unmanaged_keys;
     static RepresentationManager& get(){
         static RepresentationManager<RepresentationType> instance;
         return instance;
@@ -199,7 +208,11 @@ public:
     RepresentationKey create_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
     RepresentationKey create_primitive_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
     RepresentationKey create_character_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    RepresentationKey create_character_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+
+    RepresentationKey create_character_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, Controller::Character* character);
     RepresentationKey create_editor_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+
     RepresentationKey forward_to_bullet(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
     RepresentationKey forward_to_gui(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 
@@ -213,6 +226,7 @@ public:
 
     // THIS NEEDS TO CHANGE
     RepresentationKey move_to_bullet(RepresentationKey& key);
+    entt::entity create_bullet_object(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
     // already by key probably
     bool move_to_gui(int registry_owner, RepresentationKey& key);
 
@@ -224,25 +238,35 @@ public:
 class EntityMode;
 
 
+// see move_character_to_singleton
+//
+// initialize this with a pointer. this should own the pointer
+// // why does this store position and such
 class RepresentationCharacter{
 public:
-    glm::vec3 position, rotation, scale;
-    Controller::Character character;
-
+    //glm::vec3 position, rotation, scale;
+    std::unique_ptr<Controller::Character> character;
     friend class RepresentationManager<RepresentationCharacter>;
 public:
+    RepresentationCharacter(entt::entity e, /*glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,*/ Controller::Character* character):
+        //position(position), rotation(rotation), scale(scale), 
+        character(character)
+    {
+    }
 
-    RepresentationCharacter(entt::entity e, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale):
-        position(position), rotation(rotation), scale(scale), 
-        character(e, position, rotation)
+
+
+    RepresentationCharacter(entt::entity e, glm::vec3 position, glm::vec3 rotation /*, glm::vec3 scale*/):
+        // position(position), rotation(rotation), scale(scale), 
+        character(new Controller::Character(e, position, rotation))
     {
     }
 
     RepresentationCharacter& operator=(RepresentationCharacter&& other)noexcept
     {
-        position = (std::move(other.position));
-        rotation = (std::move(other.rotation));
-        scale = (std::move(other.scale));
+        //position = (std::move(other.position));
+        //rotation = (std::move(other.rotation));
+        //scale = (std::move(other.scale));
         character = std::move(other.character);
         return *this;
     }
@@ -251,23 +275,21 @@ public:
     RepresentationCharacter(const RepresentationCharacter& other) = delete;
     RepresentationCharacter(RepresentationCharacter&& other)noexcept
     :
-        position(std::move(other.position)),
-        rotation(std::move(other.rotation)),
-        scale(std::move(other.scale)),
+        //position(std::move(other.position)),
+        //rotation(std::move(other.rotation)),
+        //scale(std::move(other.scale)),
         character {std::move(other.character)}
     {
     }
 
 };
 
-inline void move_character_to_singleton(Controller::Character& ptr){
+inline void move_character_to_singleton(std::unique_ptr<Controller::Character>& ptr){
      if(Controller::ControllerSingleton::get().character != nullptr){ 
          Controller::ControllerSingleton::get().clear();
      }
 
-     Controller::ControllerSingleton::get().character = 
-         std::make_unique<Controller::Character>(Controller::Character(std::move(ptr)));
-
+     Controller::ControllerSingleton::get().character = std::move(ptr);
 }
 
 
@@ -342,6 +364,7 @@ public:
 public:
     BulletRepresentation(entt::entity e, int type):e(e), representation_type(type){}
     friend class BulletScene;
+    friend class RepresentationManager<BulletRepresentation>;
 public:
     BulletRepresentation& operator=(const BulletRepresentation& rep){ 
         e = rep.e; representation_type = rep.representation_type; 

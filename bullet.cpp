@@ -2,6 +2,7 @@
 #include "BulletCollision/BroadphaseCollision/btAxisSweep3.h"
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
 
+// need no return something maybe. no
 bool BulletScene::stop_manage_representation(RepresentationKey key){
     auto& manager = RepresentationManager<BulletRepresentation>::get();
     auto& rep = manager.get_representation(key);
@@ -122,6 +123,22 @@ void BulletScene::step(float delta_time) {
     world->stepSimulation(dt, 1, fixed_time_step);
 }
 
+// move this to math
+ /*
+btVector3 to_btVector3(glm::vec3 vec){ return btVector3{btScalar(vec.x),btScalar(vec.y),btScalar(vec.z)}; }
+*/
+void BulletScene::temp_throw_ball(glm::vec3 position, glm::vec3 direction, float velocity){
+    auto uniform_scale = 0.2f;
+    // type is not in scope and this function needs to be declared
+    auto e = RepresentationManager<BulletRepresentation>::get().create_bullet_object(RepresentationType::SPHERE, position, glm::vec3(0, 0, 0), glm::vec3(uniform_scale, uniform_scale, uniform_scale));
+    auto* rb = entities.create_ball(e, position, glm::vec3(0, 0, 0), uniform_scale);
+    auto linear_velocity = to_btVector3(direction * velocity);
+    world->addRigidBody(rb);
+    rb->setLinearVelocity(linear_velocity);
+}
+
 BulletScene::BulletScene()
 {
 }
+
+

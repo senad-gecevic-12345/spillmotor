@@ -1,4 +1,5 @@
 #include "Window.h"
+#include <iostream>
 
 const int Window::gl_ver_maj{ 3 };
 const int Window::gl_ver_min{ 3 };
@@ -27,6 +28,19 @@ void Window::cursor_position_callback(GLFWwindow* window, double mouse_x, double
 }
 
 void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
+        PollKeyboard::get().mb_1 = true;
+    }
+    else if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE){
+        PollKeyboard::get().mb_1 = false;
+    }
+    if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
+        PollKeyboard::get().mb_2 = true;
+
+    }
+    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
+        PollKeyboard::get().mb_2 = false;
+    }
 }
 
 //other config

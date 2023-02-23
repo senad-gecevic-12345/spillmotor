@@ -38,14 +38,43 @@ RepresentationKey RepresentationManager<EditorRepresentation>::create_primitive_
     editor_registry.m_registry.emplace<MeshLoaderNew::MeshRenderId>(e, render);
 
     return sparce.add(rep, RegistryOwner::EDITORREGISTRY);
-
 };
+
+template<>
+RepresentationKey RepresentationManager<RepresentationCharacter>::create_character_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale){
+    auto& registry = Registry::get().registry;
+    auto e = registry.create();
+    Controller::Character* character = nullptr;
+    switch(type){
+        case 0:
+              character = new Controller::Character(e, position, rotation);
+            break;
+        case 1:
+            character = new Controller::ShootingCharacter(e, position, rotation);
+            break;
+    }
+    assert(character != nullptr);
+    RepresentationCharacter rep(e, /*position, rotation, scale,*/ character);
+
+    registry.emplace<Tags::RepresentationRenderNewMeshLoader>(e);
+    registry.emplace<Component::Position>(e, position.x, position.y, position.z);
+    registry.emplace<Component::Rotation>(e, rotation.x, rotation.y, rotation.z);
+    registry.emplace<Component::Scale>(e, scale);
+
+    std::string default_capsule_obj{"/home/solidus/Assets/Models/default_capsule.obj"};
+
+    registry.emplace<MeshLoaderNew::MeshRenderId>
+        (e, MeshLoaderNew::load_mesh(default_capsule_obj));
+
+    return sparce.add(std::move(rep), RegistryOwner::EDITORREGISTRY);
+}
+
 
 template<>
 RepresentationKey RepresentationManager<RepresentationCharacter>::create_character_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale){
     auto& registry = Registry::get().registry;
     auto e = registry.create();
-    RepresentationCharacter rep(e, position, rotation, scale);
+    RepresentationCharacter rep(e, position, rotation/*, scale*/);
 
     registry.emplace<Tags::RepresentationRenderNewMeshLoader>(e);
     registry.emplace<Component::Position>(e, position.x, position.y, position.z);
@@ -94,15 +123,46 @@ RepresentationKey RepresentationManager<EditorRepresentation>::move_to_bullet(Re
 
     eregistry.m_registry.destroy(e);
 
-    return key;
+    return new_key;
 }
 
+// need to return something. probably just the entity id
+template<>
+entt::entity RepresentationManager<BulletRepresentation>::create_bullet_object(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale){
+    auto& registry = Registry::get().registry;
+    auto e = registry.create();
+    auto rep = BulletRepresentation(e, type);
+
+    registry.emplace<Tags::RepresentationRenderNewMeshLoader>(e);
+    registry.emplace<Component::Position>(e, position.x, position.y, position.z);
+    registry.emplace<Component::Rotation>(e, rotation.x, rotation.y, rotation.z);
+    registry.emplace<Component::Scale>(e, scale);
+
+    MeshLoaderNew::MeshRenderId render;
+    switch(rep.representation_type){
+        case RepresentationType::SPHERE:
+            render = MeshLoaderNew::load_mesh(xd::unit_sphere_obj);
+            break;
+        case RepresentationType::BOX:
+            render = MeshLoaderNew::load_mesh(xd::unit_box_obj);
+            break;
+        default:
+            render = MeshLoaderNew::load_mesh(xd::unit_sphere_obj);
+            break;
+    }
+
+    registry.emplace<MeshLoaderNew::MeshRenderId>(e, render);
+
+    unmanaged_keys.keys.push_back(sparce.add(rep, RegistryOwner::BULLETREGISTRY));
+
+    return e;
+}
 
 template<>
 void RepresentationManager<RepresentationCharacter>::delete_representation(const RepresentationKey& key){
     auto& rep = sparce.get(key);
     auto& registry = Registry::get().registry;
-    registry.destroy(rep.character.e);
+    registry.destroy(rep.character->e);
     sparce.remove(key);
 }
 

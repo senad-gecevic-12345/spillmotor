@@ -19,6 +19,7 @@
 #include "Actor.h"
 #include "GuiHelpers.h"
 #include "EditorRegistry.h"
+#include "bullet.h"
 
 class NewGui{
 public:
@@ -32,6 +33,7 @@ public:
 
     RepresentationManager<RepresentationCharacter>&       character_representation_manager;
     RepresentationManager<EditorRepresentation>&          editor_manager;
+    RepresentationManager<BulletRepresentation>&          bullet_manager;
 
 public:
 
@@ -71,7 +73,7 @@ public:
             glm::vec3 position(0, 0, 0);
             glm::vec3 rotation(0, 0, 0);
             glm::vec3 scale(1.f, 1.f, 1.f);
-            auto key = character_representation_manager.create_character_representation(
+            auto key = character_representation_manager.create_character_representation(1,
                 position, rotation, scale);
 
             characters_list.add_representation(key);
@@ -82,7 +84,7 @@ public:
             auto &representation =
                 character_representation_manager.get_representation(characters_list[i].key);
 
-            const auto e = representation.character.e;
+            const auto e = representation.character->e;
 
             bool is_selected = i == characters_list.selected_id;
             if(ImGui::Selectable(std::to_string((int)e).c_str(), is_selected)){
@@ -96,7 +98,14 @@ public:
     void bullet_selection(){
         ImGui::Begin("Bullet");
         if(bullet_list.has_selection()){
-
+            if(ImGui::Button("delete")){
+                auto& selection = bullet_list.get_selection();
+                auto& key = selection.key;
+                auto e = bullet_manager.get_representation(key).get_entity_id();
+                BulletScene::get().stop_manage_representation(key);
+                Registry::get().registry.destroy(e);
+                bullet_list.throw_away(bullet_list.selected_id);
+            }
         }
        ImGui::End();
     }
@@ -203,7 +212,8 @@ public:
 
     explicit NewGui():
         character_representation_manager(RepresentationManager<RepresentationCharacter>::get()),
-        editor_manager(RepresentationManager<EditorRepresentation>::get())
+        editor_manager(RepresentationManager<EditorRepresentation>::get()),
+        bullet_manager(RepresentationManager<BulletRepresentation>::get())
     {
     }
 
