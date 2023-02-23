@@ -46,15 +46,15 @@ RepresentationKey RepresentationManager<RepresentationCharacter>::create_charact
     auto e = registry.create();
     Controller::Character* character = nullptr;
     switch(type){
-        case 0:
+        case CharacterTypes::STANDARD:
               character = new Controller::Character(e, position, rotation);
             break;
-        case 1:
+        case CharacterTypes::SHOOTER:
             character = new Controller::ShootingCharacter(e, position, rotation);
             break;
     }
     assert(character != nullptr);
-    RepresentationCharacter rep(e, /*position, rotation, scale,*/ character);
+    RepresentationCharacter rep(e, character);
 
     registry.emplace<Tags::RepresentationRenderNewMeshLoader>(e);
     registry.emplace<Component::Position>(e, position.x, position.y, position.z);

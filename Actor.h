@@ -23,16 +23,12 @@ inline btVector3 to_btVector3(glm::vec3 vec){ return btVector3{btScalar(vec.x),b
 
 namespace Controller{
 
-    // TODO: make this virtual and store it as a base for the representations
-    // then can easily implement gameplay code
-    // virtual destructor
     class Character{
     public:
         entt::entity e;
     private:
         BULLETCOPY::btKinematicCharacterController* controller;
         btPairCachingGhostObject* ghost_obj;
-        btScalar walk_speed = 8.0;
 
     public:
 
@@ -90,7 +86,6 @@ namespace Controller{
         Character& operator=(Character&& other)noexcept{
             if(this == &other)
                 return *this;
-            walk_speed = (std::move(other.walk_speed));
             e = (std::move(other.e));
             controller = (std::exchange(other.controller, nullptr));
             ghost_obj = std::exchange(other.ghost_obj, nullptr);
@@ -99,7 +94,6 @@ namespace Controller{
         Character():ghost_obj(nullptr), controller(){};
         Character(Character&& other):
             e(std::move(other.e)),
-            walk_speed(std::move(other.walk_speed)),
             controller(std::exchange(other.controller, nullptr)),
             ghost_obj(std::exchange(other.ghost_obj, nullptr))
         { 

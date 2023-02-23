@@ -21,6 +21,7 @@
 #include "EditorRegistry.h"
 #include "bullet.h"
 
+
 class NewGui{
 public:
     // need to delete from list when moving
@@ -73,7 +74,7 @@ public:
             glm::vec3 position(0, 0, 0);
             glm::vec3 rotation(0, 0, 0);
             glm::vec3 scale(1.f, 1.f, 1.f);
-            auto key = character_representation_manager.create_character_representation(1,
+            auto key = character_representation_manager.create_character_representation(CharacterTypes::SHOOTER,
                 position, rotation, scale);
 
             characters_list.add_representation(key);

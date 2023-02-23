@@ -13,6 +13,11 @@
 #include <signal.h>
 
 
+enum CharacterTypes{
+    STANDARD = 0,
+    SHOOTER = 1
+};
+
 inline int get_id(){
     static int id = 0;
     return ++id;
@@ -244,29 +249,21 @@ class EntityMode;
 // // why does this store position and such
 class RepresentationCharacter{
 public:
-    //glm::vec3 position, rotation, scale;
     std::unique_ptr<Controller::Character> character;
     friend class RepresentationManager<RepresentationCharacter>;
 public:
-    RepresentationCharacter(entt::entity e, /*glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,*/ Controller::Character* character):
-        //position(position), rotation(rotation), scale(scale), 
+    RepresentationCharacter(entt::entity e, Controller::Character* character):
         character(character)
     {
     }
 
-
-
-    RepresentationCharacter(entt::entity e, glm::vec3 position, glm::vec3 rotation /*, glm::vec3 scale*/):
-        // position(position), rotation(rotation), scale(scale), 
+    RepresentationCharacter(entt::entity e, glm::vec3 position, glm::vec3 rotation):
         character(new Controller::Character(e, position, rotation))
     {
     }
 
     RepresentationCharacter& operator=(RepresentationCharacter&& other)noexcept
     {
-        //position = (std::move(other.position));
-        //rotation = (std::move(other.rotation));
-        //scale = (std::move(other.scale));
         character = std::move(other.character);
         return *this;
     }
