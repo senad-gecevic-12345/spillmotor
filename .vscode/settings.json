@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.ipp": "cpp",
+        "string_view": "cpp",
+        "limits": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "sstream": "cpp",
+        "*.inc": "cpp"
+    }
+}
