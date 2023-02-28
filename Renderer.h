@@ -12,7 +12,7 @@ void bullet_temp_renderer(entt::registry* registry, unsigned int shader_program,
 void bullet_temp_renderer_single(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
 void representation_renderer(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
 void representation_renderer_new_mesh_render(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
-
+void representation_renderer_normalmap(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
 }
 
 namespace BULLET_SHADER_LIGHTS{ 

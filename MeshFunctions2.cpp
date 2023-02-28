@@ -11,6 +11,7 @@
 #include "TextureFunctions.h"
 #include "GuiGlobalVariablesSingleton.h"
 
+// TODO: add normal map, then character
 
 namespace MeshLoaderNew{
     std::string get_directory(const std::string& str){
@@ -159,6 +160,22 @@ namespace MeshLoaderNew{
         return 0;
     }
 
+    bool load_normal_map_texture(const std::string& directory, const aiMaterial* material, Material& mat){
+        if(material->GetTextureCount(aiTextureType_NORMALS) > 0){
+            aiString path;
+            if(material->GetTexture(aiTextureType_NORMALS, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
+                std::string texture_path  = directory + std::string(path.data);
+                std::cout << "texture path height: " << texture_path << std::endl;
+                if(load_texture_from_file(texture_path, mat.normal)){
+                    return 1;
+                }
+            }
+        }
+
+        std::cout << "no normal texture found" << std::endl;
+        return 0;
+    }
+
     bool load_specular_texture(const std::string& directory, const aiMaterial* material, Material& mat){
         if(material->GetTextureCount(aiTextureType_SHININESS) > 0){
             aiString path;
@@ -172,7 +189,49 @@ namespace MeshLoaderNew{
         return 0;
     }
 
+    // for normals need another buffer
     void populate_buffers(Mesh& mesh){
+
+        glGenVertexArrays(1, &mesh.VAO);
+		glGenBuffers(1, &mesh.buffers[BUFFER_TYPE::POS]);
+		glGenBuffers(1, &mesh.buffers[BUFFER_TYPE::NORMAL]);
+        glGenBuffers(1, &mesh.buffers[BUFFER_TYPE::TEXCOORD]);
+        glGenBuffers(1, &mesh.buffers[BUFFER_TYPE::INDEX]);
+        glGenBuffers(1, &mesh.buffers[BUFFER_TYPE::TANGENT]);
+
+        glBindVertexArray(mesh.VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[BUFFER_TYPE::POS]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*mesh.positions.size(), &mesh.positions[0], GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[BUFFER_TYPE::NORMAL]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*mesh.normals.size(), &mesh.normals[0], GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[BUFFER_TYPE::TEXCOORD]);
+        glBufferData(GL_ARRAY_BUFFER,sizeof(glm::vec2) * mesh.tex_coords.size(), &mesh.tex_coords[0], GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+        // new entry
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[BUFFER_TYPE::TANGENT]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * mesh.tangents.size(), &mesh.tangents[0], GL_STATIC_DRAW);
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[BUFFER_TYPE::INDEX]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*mesh.indices.size(), &mesh.indices[0], GL_STATIC_DRAW);
+    }
+
+
+    // generate another buffer for normal memes
+    void populate_buffers_normal(Mesh& mesh){
+        // mesh.mTangents
 
         glGenVertexArrays(1, &mesh.VAO);
 		glGenBuffers(1, &mesh.buffers[BUFFER_TYPE::POS]);
@@ -203,6 +262,8 @@ namespace MeshLoaderNew{
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*mesh.indices.size(), &mesh.indices[0], GL_STATIC_DRAW);
     }
 
+
+
     void set_specular_exponent_texture_unit(unsigned int tex){
     }
     void controll_specular_exponent(bool enable){
@@ -226,6 +287,7 @@ namespace MeshLoaderNew{
         }
     }
 
+    // mesh->mTangents
     void init_mesh(const aiMesh* mesh, Mesh& output){
         for(int i = 0; i < mesh->mNumVertices; ++i){
             const aiVector3D& pos = mesh->mVertices[i];
@@ -243,7 +305,39 @@ namespace MeshLoaderNew{
             const aiVector3D& texcoord =
                 mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][i] : aiVector3D(0, 0, 0);
             output.tex_coords.push_back(glm::vec2(texcoord.x, texcoord.y));
-        };
+        }
+        for(int i = 0;  i < mesh->mNumFaces; ++i){
+            const aiFace& face = mesh->mFaces[i];
+            output.indices.push_back(face.mIndices[0]);
+            output.indices.push_back(face.mIndices[1]);
+            output.indices.push_back(face.mIndices[2]);
+        }
+    }
+
+    void init_mesh_with_tangents(const aiMesh* mesh, Mesh& output){
+        for(int i = 0; i < mesh->mNumVertices; ++i){
+            const aiVector3D& pos = mesh->mVertices[i];
+            output.positions.push_back(glm::vec3(pos.x, pos.y, pos.z));
+            
+            if(mesh->mTangents){
+                const aiVector3D& tangent = mesh->mTangents[i];
+                output.tangents.push_back(glm::vec3(tangent.x, tangent.y, tangent.z));
+            }
+            if(mesh->mNormals){ //??
+                const aiVector3D& normal = mesh->mNormals[i];
+                output.normals.push_back(glm::vec3(normal.x, normal.y, normal.z));
+            }
+            else{
+                output.normals.push_back(glm::vec3(0, 1, 0));
+            }
+
+            // cross tangent and normal for bitangent
+
+            // should not be a vector 2d?
+            const aiVector3D& texcoord =
+                mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][i] : aiVector3D(0, 0, 0);
+            output.tex_coords.push_back(glm::vec2(texcoord.x, texcoord.y));
+        }
 
         for(int i = 0;  i < mesh->mNumFaces; ++i){
             const aiFace& face = mesh->mFaces[i];
@@ -266,14 +360,16 @@ namespace MeshLoaderNew{
 
         for(std::size_t i = 0; i < mesh.meshes.size(); ++i){
             const aiMesh* _mesh = scene->mMeshes[i];
-            init_mesh(_mesh, mesh);
+            init_mesh_with_tangents(_mesh, mesh);
         }
 
         for(unsigned int i = 0; i < scene->mNumMaterials; ++i){
             const aiMaterial* material = scene->mMaterials[i];
 
             auto directory = get_directory(file_loc_name);
-            load_diffuse_texture (directory, material, mesh.materials[i]);
+            load_diffuse_texture(directory, material, mesh.materials[i]);
+            load_normal_map_texture(directory, material, mesh.materials[i]);
+
         }
 
         populate_buffers(mesh);
@@ -282,7 +378,7 @@ namespace MeshLoaderNew{
     bool load_mesh(std::string file_loc_name, Mesh& target){
         Assimp::Importer importer;
 
-        unsigned int ASSIMP_LOAD_FLAGS = aiProcess_Triangulate;
+        unsigned int ASSIMP_LOAD_FLAGS = aiProcess_Triangulate | aiProcess_CalcTangentSpace;
 
         const aiScene* scene =
             importer.ReadFile(file_loc_name.c_str(), ASSIMP_LOAD_FLAGS);
@@ -294,13 +390,6 @@ namespace MeshLoaderNew{
         glBindVertexArray(0);
         return 1;
     };
-
-
-
-
-
-
-
 
     MeshRenderId load_mesh(std::string file_loc_name){
         auto& meshes = MeshSingleton::get().meshes;

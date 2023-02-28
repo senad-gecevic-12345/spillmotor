@@ -229,6 +229,20 @@ unsigned int load_shader(const char* shader_loc_name, int type){
 	glCompileShader(shader);
 	return shader;
 }
+void FlashLightShaderNormalMap::uniform(glm::mat4 view, glm::mat4 proj,
+	glm::vec3 position, glm::vec3 direction){
+	glUniformMatrix4fv(u_view,  1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(u_proj,  1, GL_FALSE, glm::value_ptr(proj));
+	glUniform3fv(u_position,    1, glm::value_ptr(position));
+	glUniform3fv(u_direction,   1, glm::value_ptr(direction));
+}
+void FlashLightShaderNormalMap::bind(){
+	glUseProgram(shader_program);
+	//glUniform1f(u_cutoff, glm::cos(glm::radians(0.3f)));
+	glUniform1f(u_cutoff, 10.f);
+
+}
+
 
 void FlashLightShaderNew::uniform(glm::mat4 view, glm::mat4 proj,
 	glm::vec3 position, glm::vec3 direction){
@@ -244,6 +258,22 @@ void FlashLightShaderNew::bind(){
 
 }
 
+FlashLightShaderNormalMap::FlashLightShaderNormalMap(){
+	shader_program = link_shaders(
+		load_shader((std::string(shader_folder) + "flashlight_normal.fs").c_str(), GL_FRAGMENT_SHADER),
+		load_shader((std::string(shader_folder) + "flashlight_normal.vs").c_str(), GL_VERTEX_SHADER)
+	);
+
+	u_cutoff = glGetUniformLocation(shader_program,   "light.cutoff");
+	u_position  = glGetUniformLocation(shader_program, "light.position");
+	u_direction = glGetUniformLocation(shader_program, "light.direction");
+
+	u_view = glGetUniformLocation(shader_program, "view");
+	u_proj = glGetUniformLocation(shader_program, "projection");
+	u_model = glGetUniformLocation(shader_program, "model");
+
+
+}
 FlashLightShaderNew::FlashLightShaderNew(){
 	shader_program = link_shaders(
 		load_shader((std::string(shader_folder) + "flashlight_new.fs").c_str(), GL_FRAGMENT_SHADER),

@@ -299,6 +299,8 @@ int main() {
 	}
 
 	auto [shader_program_bullet, model_loc_bullet, view_loc_bullet, proj_loc_bullet, bsl_u_pos, bsl_u_dir, bsl_u_col] = create_shader_program_3d_bullet();
+//	auto [shader_program_bullet, model_loc_bullet, view_loc_bullet, proj_loc_bullet, bsl_u_pos, bsl_u_dir, bsl_u_col] = create_shader_program_3d_bullet();
+
 
 	std::string skybox_dir = "/home/solidus/Assets/HDRI/";
 	std::array<std::string, 6> skybox_files{
@@ -315,6 +317,7 @@ int main() {
 	SHADERS::BulletShader bullet_shader;
 	SHADERS::FlashLightShader flashlight_shader;
 	SHADERS::FlashLightShaderNew flashlight_shader_new;
+	SHADERS::FlashLightShaderNormalMap flashlight_shader_normal_map;
 
 	glm::mat4 glm_proj = glm::perspective(45.f, 1920.f / 1080.f, 0.1f, 500.f);
 
@@ -413,6 +416,11 @@ int main() {
 										   flashlight_shader_new.shader_program, flashlight_shader_new.u_model);
 
 
+            flashlight_shader_normal_map.bind(); 
+            flashlight_shader_normal_map.uniform(glm_view, glm_proj,
+									  cam_pos, front);
+            Renderer::representation_renderer_normalmap(&(editor_registry.m_registry),
+                    flashlight_shader_normal_map.shader_program, flashlight_shader_normal_map.u_model);
 
             // SKYBOX
             auto camera_front = character_controller.camera.get_front();

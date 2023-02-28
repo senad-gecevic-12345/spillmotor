@@ -16,7 +16,7 @@ namespace Tags {
 	struct BulletPhysics {};
 	struct RepresentationRender {};
 	struct RepresentationRenderNewMeshLoader {};
-
+    struct NormalMap{};
 }
 
 namespace RenderTags {

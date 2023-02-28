@@ -21,11 +21,12 @@ RepresentationKey RepresentationManager<EditorRepresentation>::create_primitive_
     editor_registry.m_registry.emplace<Component::Position>(e, position.x, position.y, position.z);
     editor_registry.m_registry.emplace<Component::Rotation>(e, rotation.x, rotation.y, rotation.z);
     editor_registry.m_registry.emplace<Component::Scale>(e, scale);
+    editor_registry.m_registry.emplace<Tags::NormalMap>(e);
 
     MeshLoaderNew::MeshRenderId render;
     switch(rep.representation_type){
         case RepresentationType::SPHERE:
-            render = MeshLoaderNew::load_mesh(xd::unit_sphere_obj);
+            render = MeshLoaderNew::load_mesh(xd::sphere_with_normal);
             break;
         case RepresentationType::BOX:
             render = MeshLoaderNew::load_mesh(xd::unit_box_obj);
@@ -140,6 +141,9 @@ entt::entity RepresentationManager<BulletRepresentation>::create_bullet_object(i
 
     MeshLoaderNew::MeshRenderId render;
     switch(rep.representation_type){
+        case RepresentationType::SPHERE_WITH_NORMAL:
+            render = MeshLoaderNew::load_mesh(xd::sphere_with_normal);
+            break;
         case RepresentationType::SPHERE:
             render = MeshLoaderNew::load_mesh(xd::unit_sphere_obj);
             break;

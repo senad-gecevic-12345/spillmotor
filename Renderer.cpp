@@ -10,6 +10,7 @@
 #include "Components.h"
 #include "MeshFunctions2.h"
 #include "TextureFunctions.h"
+#include <iostream>
 
 
 namespace Renderer{
@@ -60,7 +61,7 @@ namespace Renderer{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 	void representation_renderer_new_mesh_render(entt::registry* registry, unsigned int shader_program, unsigned int model_loc){
-		auto group = registry->group<>(entt::get<Tags::RepresentationRenderNewMeshLoader, Component::Position, MeshLoaderNew::MeshRenderId, Component::Rotation, Component::Scale>);
+		auto group = registry->group<>(entt::get<Tags::RepresentationRenderNewMeshLoader, Component::Position, MeshLoaderNew::MeshRenderId, Component::Rotation, Component::Scale>, entt::exclude<Tags::NormalMap>);
 		for(auto e : group){
 			auto [pos, render, rotate, scale] =
 				registry->get<Component::Position, MeshLoaderNew::MeshRenderId, Component::Rotation, Component::Scale>(e);
@@ -82,6 +83,51 @@ namespace Renderer{
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, render.materials[mat_index].diffuse.id);
 				glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
+
+                // fixme
+                glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, render.materials[mat_index].normal.id);
+                // either one or zero dont know
+				glUniform1i(glGetUniformLocation(shader_program, "normalmap"), 0);
+
+				glDrawElementsBaseVertex(
+					GL_TRIANGLES,
+					render.meshes[i].no_indices,
+					GL_UNSIGNED_INT,
+					(void*)(sizeof(unsigned int) * render.meshes[i].base_index),
+					render.meshes[i].base_vertex);
+				glBindTexture(GL_TEXTURE_2D, 0);
+
+			}
+		}
+	}
+	void representation_renderer_normalmap(entt::registry* registry, unsigned int shader_program, unsigned int model_loc){
+		auto group = registry->group<>(entt::get<Tags::NormalMap, Tags::RepresentationRenderNewMeshLoader, Component::Position, MeshLoaderNew::MeshRenderId, Component::Rotation, Component::Scale>);
+		for(auto e : group){
+			auto [pos, render, rotate, scale] =
+				registry->get<Component::Position, MeshLoaderNew::MeshRenderId, Component::Rotation, Component::Scale>(e);
+			glm::mat4 rotate_matrix(1.f);
+			rotate_matrix = glm::rotate(rotate_matrix, Math::deg_to_rad(rotate.y), glm::vec3(0, 1, 0));
+			rotate_matrix = glm::rotate(rotate_matrix, Math::deg_to_rad(rotate.x), glm::vec3(1, 0, 0));
+			rotate_matrix = glm::rotate(rotate_matrix, Math::deg_to_rad(rotate.z), glm::vec3(0, 0, 1));
+			glm::mat4 model(1.f);
+
+			model = glm::translate(model, glm::vec3(pos.x, pos.y, pos.z));
+			model = model * rotate_matrix;
+			model = glm::scale(model, scale.scale);
+			glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+
+			glBindVertexArray(render.VAO);
+			for(int i = 0; i < render.meshes.size(); ++i){
+				auto mat_index = render.meshes[i].material_index;
+
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, render.materials[mat_index].diffuse.id);
+				glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
+
+                glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, render.materials[mat_index].normal.id);
+				glUniform1i(glGetUniformLocation(shader_program, "normalmap"), 1);
 
 				glDrawElementsBaseVertex(
 					GL_TRIANGLES,

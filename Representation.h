@@ -30,6 +30,7 @@ namespace Controller{
 namespace xd{
     inline std::string unit_shapes_folder{ "/home/solidus/Assets/UnitShapes/" };
     inline std::string unit_sphere_obj{unit_shapes_folder + "sphere.obj"};
+    inline std::string sphere_with_normal{"/home/solidus/Assets/Normal/sphere_with_normal_map.obj"};
     inline std::string unit_sphere_mtl{unit_shapes_folder + "sphere.mtl"};
     inline std::string unit_cone_obj{ unit_shapes_folder + "cone.obj"};
     inline std::string unit_cone_mtl{ unit_shapes_folder + "cone.mtl"};
@@ -50,6 +51,7 @@ class ComponentSelectionScale;
 class Representation;
 
 enum RepresentationType{
+    SPHERE_WITH_NORMAL,
     SPHERE,
     BOX,
     CAPSULE

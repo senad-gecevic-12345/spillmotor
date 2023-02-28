@@ -99,6 +99,19 @@ namespace SHADERS{
         unsigned int uniform;
     };
 
+    struct FlashLightShaderNormalMap{
+        unsigned int shader_program;
+        unsigned int u_model, u_view, u_proj, u_view_pos;
+        unsigned int u_cutoff;
+        unsigned int u_position, u_direction;
+
+        void uniform(glm::mat4 view, glm::mat4 proj, glm::vec3 position, glm::vec3 direction);
+        void bind();
+
+        FlashLightShaderNormalMap();
+
+    };
+
     struct FlashLightShaderNew{
         unsigned int shader_program;
         unsigned int u_model, u_view, u_proj, u_view_pos;

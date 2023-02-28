@@ -23,6 +23,7 @@ namespace MeshLoaderNew{
         // has no bind function
         Component::Texture diffuse;
         Component::Texture specular_exponent;
+        Component::Texture normal;
     };
 
     // MeshOffset
@@ -38,6 +39,7 @@ namespace MeshLoaderNew{
         POS       = 1,
         TEXCOORD  = 2,
         NORMAL    = 3,
+        TANGENT   = 4
     };
 
 
@@ -52,6 +54,7 @@ namespace MeshLoaderNew{
         std::vector<Material> materials;
         std::vector<glm::vec3> positions;
         std::vector<glm::vec3> normals;
+        std::vector<glm::vec3> tangents;
         std::vector<glm::vec2> tex_coords;
         std::vector<unsigned int> indices;
         unsigned int buffers[4];
