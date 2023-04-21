@@ -5,3 +5,8 @@ write_out_single.txt
 Log
 CMakeFiles
 build
+.ninja_deps
+.ninja_log
+Log
+Testing
+build

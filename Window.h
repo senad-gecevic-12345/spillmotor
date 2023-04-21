@@ -7,7 +7,6 @@
 #include <cstring>
 
 struct Keyboard {
-    static Keyboard* keyboard;
     bool w, a, s, d, space, q, e, z, x, c;
     Keyboard() {
         w = false;
@@ -22,15 +21,12 @@ struct Keyboard {
         c = false;
     }
     static Keyboard& get() {
-        if (keyboard == nullptr) {
-            keyboard = new Keyboard();
-        }
-		return *keyboard;
+        static Keyboard keyboard;
+		return keyboard;
     }
 };
 
-class Window
-{
+class Window{
 public:
     static const int gl_ver_maj, gl_ver_min;
     static int width, height;
@@ -42,6 +38,7 @@ public:
 public:
     static GLFWwindow* get_window();
     static void swap_buffers();
+    static void update_viewport();
     static void framebuffer_size_callback(GLFWwindow*, int win_width, int win_height);
     static void cursor_position_callback(GLFWwindow*, double mouse_x, double mouse_y);
     static void mouse_button_callback(GLFWwindow*, int button, int action, int mods);
@@ -54,19 +51,10 @@ public:
 };
 
 
-// for event based, just add the button to a list and clear on next frame
-
-struct KeyboardPressFrameList{
-
-};
-
 struct PollKeyboard {
-    static PollKeyboard* instance;
     static PollKeyboard& get() {
-        if (instance == nullptr) {
-            instance = new PollKeyboard();
-        }
-        return *instance;
+        static PollKeyboard instance;
+        return instance;
     }
 	int get_key_state(int key) {
 		return glfwGetKey(Window::get_window(), key);
@@ -92,7 +80,6 @@ struct PollKeyboard {
         check(GLFW_KEY_SPACE, space);
     }
      PollKeyboard() {
-         //memset(keys, 0, sizeof(keys));
         w = false;
         a = false;
         s = false;

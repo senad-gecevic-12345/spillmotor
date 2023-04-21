@@ -9,6 +9,9 @@ namespace World {
 	}
 	float Clock::get_dt() const { return (float)dt; }
 	float Clock::get_time() const { return glfwGetTime(); }
+    float Clock::get_time_since_start()const{
+        return glfwGetTime() - init_time;
+    }
 	void Clock::update(){
 		double now = glfwGetTime();
 		dt = now - last_update;
@@ -18,7 +21,6 @@ namespace World {
 		init_time = glfwGetTime();
 		last_update = init_time;
 		dt = 0;
-
 	}
 	float get_time() {
 		return Clock::get().get_time();

@@ -4,7 +4,7 @@
 
 #include "Utils.h"
 #include "bullet.h"
-#include "File.h"
+//#include "File.h"
 //#include "Actor.h"
 #include <memory>
 
@@ -23,6 +23,7 @@ namespace World {
 		static Clock& get();
 		float get_dt() const;
 		float get_time() const;
+        float get_time_since_start()const;
 		void update();
         Clock();
         ~Clock()=default;

@@ -258,11 +258,6 @@ bool btKinematicCharacterController::recoverFromPenetration(btCollisionWorld* co
 	return penetration;
 }
 
-/*
-x000055555570562b in BULLETCOPY::btKinematicCharacterController::stepUp (this=0x5555623ba9c0, world=0x55555bd295c0) at /home/solidus/Programming/ECS/ECS/btKinematicCharacterController.cpp:283
-283		callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
-*/
-// seems like missing broadphasehandle or something
 
 void btKinematicCharacterController::stepUp(btCollisionWorld* world)
 {

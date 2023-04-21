@@ -3,8 +3,9 @@ cmake_minimum_required(VERSION 3.24)
 project(ECS)
 
 set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "-O2")
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "-O0")
+#set(CMAKE_CXX_FLAGS "-O2")
 
 set(IMGUI_SOURCES
     /home/solidus/ECS_Libraries/imgui/imgui.cpp
@@ -40,7 +41,6 @@ set(SOURCES
     /home/solidus/ECS_Libraries/imgui/backends/imgui_impl_glfw.cpp
     /home/solidus/Programming/ECS/ECS/ObjParsing/NewMeshLoader_2.cpp
     /home/solidus/Programming/ECS/ECS/ObjParsing/processing.cpp
-
 )
 
     #./ObjParsing/NewMeshLoader_2.cpp

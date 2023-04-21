@@ -83,6 +83,7 @@ namespace SKYBOX{
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
         SkyBox out;
         out.VAO = skyboxVAO;
         out.VBO = skyboxVBO;
@@ -105,24 +106,17 @@ namespace SKYBOX{
 
 namespace TextureFunctions{
 
-#if 0
-
-
-bool load_texture_hdr(std::string texture_file_path, Component::Texture& texture){
-    stbi_set_flip_vertically_on_load(1);
-    // channels
-    // bits 8 * sizeof(float)
-    texture.data = reinterpret_cast<unsigned char*>(stbi_loadf(texture_file_path.c_str(), &texture.width, &texture.height, &texture.bits_per_pixel, 0));
-    // image bits = 8 * sizeof(float)
+void create_depth_texture(Component::Texture& texture, unsigned int width, unsigned int height){
     glGenTextures(1, &texture.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texture.id);
 
-    return 1;
-
+    glBindTexture(GL_TEXTURE_2D, texture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
-
-#endif
-
 
 bool load_texture_jpg(std::string texture_file_path, Component::Texture& texture){
     stbi_set_flip_vertically_on_load(1);
@@ -136,6 +130,28 @@ bool load_texture_jpg(std::string texture_file_path, Component::Texture& texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture.data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    return true;
+}
+bool load_texture_embedded(Component::Texture& texture, unsigned int size, void* data){
+    stbi_set_flip_vertically_on_load(1);
+    texture.data = stbi_load_from_memory((const stbi_uc*)data, size, &texture.width, &texture.height, &texture.bits_per_pixel, 0);
+
+    glGenTextures(1, &texture.id);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if(texture.bits_per_pixel == 1)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texture.width, texture.height, 0, GL_RED, GL_UNSIGNED_BYTE, texture.data);
+    if(texture.bits_per_pixel == 3)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture.data);
+    if(texture.bits_per_pixel == 4)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture.data);
+
     glGenerateMipmap(GL_TEXTURE_2D);
 
     return true;
@@ -157,9 +173,8 @@ bool load_texture_png(const std::string& texture_file_path, Component::Texture& 
     return true;
 }
 
-// does nothing
-void bind(Component::Texture& texture){
-
-}
+void bind(){}
+void bind(Component::Texture& texture){}
+void bind(unsigned int texture_location){}
 
 }

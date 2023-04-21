@@ -1,6 +1,90 @@
 #include "Utils.h"
 #include "TextureFunctions.h"
 #include "Shaders.h"
+#include "EditorRegistry.h"
+#include "NewGui.h"
+
+namespace Utils{
+    void copy_over_fix(entt::registry& registry){
+        static_cast<void>(registry.storage<Tags::TriangleEnemy>());
+        static_cast<void>(registry.storage<Tags::Ally>());
+        static_cast<void>(registry.storage<Tags::TriangleProjectile >());
+        static_cast<void>(registry.storage<Tags::Player >());
+        static_cast<void>(registry.storage<Tags::Triangle >());
+        static_cast<void>(registry.storage<Tags::Bullet >());
+        static_cast<void>(registry.storage<Tags::ManualRender >());
+        static_cast<void>(registry.storage<Tags::Model3D>());
+        static_cast<void>(registry.storage<Tags::TexModel3D>());
+        static_cast<void>(registry.storage<Tags::Sphere>());
+        static_cast<void>(registry.storage<Tags::Physics>());
+        static_cast<void>(registry.storage<Tags::BulletPhysics>());
+        static_cast<void>(registry.storage<Tags::RepresentationRender>());
+        static_cast<void>(registry.storage<Tags::RepresentationRenderNewMeshLoader>());
+        static_cast<void>(registry.storage<Component::AnimationController>());
+
+        static_cast<void>(registry.storage<RenderTags::BonesRendering>());
+        static_cast<void>(registry.storage<RenderTags::_3D_OBJECT>());
+        static_cast<void>(registry.storage<RenderTags::_3D_TEXTURE>());
+        static_cast<void>(registry.storage<RenderTags::_2D_COLOR>());
+        static_cast<void>(registry.storage<RenderTags::_2D_DEFAULT>());
+
+        static_cast<void>(registry.storage<MeshLoaderNew::MeshRenderId>());
+        static_cast<void>(registry.storage<Component::Scale>());
+        static_cast<void>(registry.storage<Component::Position>());
+        static_cast<void>(registry.storage<Component::Rotation>());
+        static_cast<void>(registry.storage<Component::Render>());
+        static_cast<void>(registry.storage<Component::Color>());
+        static_cast<void>(registry.storage<Component::_3DObjectData>());
+        static_cast<void>(registry.storage<Component::SphereCollider>());
+        static_cast<void>(registry.storage<Component::SelectedShader>());
+        static_cast<void>(registry.storage<Component::Mesh>());
+        static_cast<void>(registry.storage<Component::MeshPointers>());
+        static_cast<void>(registry.storage<Component::Force>());
+        static_cast<void>(registry.storage<Component::LifeTime>());
+        static_cast<void>(registry.storage<Component::Texture>());
+        static_cast<void>(registry.storage<Component::Render3D>());
+        static_cast<void>(registry.storage<Component::ApplyForce>());
+        static_cast<void>(registry.storage<Component::ControllVelocity>());
+        static_cast<void>(registry.storage<Component::Velocity>());
+        static_cast<void>(registry.storage<Component::Name>());
+        static_cast<void>(registry.storage<Component::OpenGLRotation>());
+    }
+	void copy_over_to_other_registry(entt::registry& to_registry, entt::registry& from_registry, entt::entity to, entt::entity from){
+		for(auto [id, storage]: from_registry.storage()) {
+			if(auto *other = to_registry.storage(id); other && storage.contains(from)) {
+				other->emplace(to, storage.get(from));
+			}
+		}
+	}
+
+
+}
+
+namespace Rectangle {
+	float vertices[] = {
+		 1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 
+		 1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f,  0.0f, 1.0f	
+	};
+	unsigned int indices[] = {
+		0, 1, 3, 
+		1, 2, 3 
+	};
+}
+
+namespace RectangleRightTop {
+	float vertices[] = {
+		 1.0f,  1.0f, 0.0f,  1.0f, 1.0f, 
+		 1.0f,  0.0f, 0.0f,  1.0f, 0.0f,
+		 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,
+		 0.0f,  1.0f, 0.0f,  0.0f, 1.0f	
+	};
+	unsigned int indices[] = {
+		0, 1, 3, 
+		1, 2, 3 
+	};
+}
 
 namespace Background {
 	float vertices[] = {
@@ -117,9 +201,34 @@ namespace Functions{
 	}
 }
 
+namespace Debug{
+	void create_render_rectangle_top_right(Component::Render& render) {
+
+		glGenVertexArrays(1, &render.VAO);
+		glGenBuffers(1, &render.VBO);
+		glGenBuffers(1, &render.EBO);
+
+		glBindVertexArray(render.VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, render.VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(RectangleRightTop::vertices), RectangleRightTop::vertices, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(RectangleRightTop::indices), RectangleRightTop::indices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+	}
+
+
+}
+
 #pragma region Background
 namespace Background {
 	void create_render_background(Component::Render& render) {
+
 		glGenVertexArrays(1, &render.VAO);
 		glGenBuffers(1, &render.VBO);
 		glGenBuffers(1, &render.EBO);
@@ -222,7 +331,6 @@ unsigned int load_shader(const char* shader_loc_name, int type){
 		shader_string.append("\n");
 	}
 	file.close();
-	std::cout << shader_string << "aoeu";
 
 	const char* shader_str = shader_string.c_str();
 	glShaderSource(shader, 1, &shader_str, NULL);
@@ -251,6 +359,47 @@ void FlashLightShaderNew::uniform(glm::mat4 view, glm::mat4 proj,
 	glUniform3fv(u_position,    1, glm::value_ptr(position));
 	glUniform3fv(u_direction,   1, glm::value_ptr(direction));
 }
+
+void FlashLightShaderNew::uniform(glm::mat4 view, glm::mat4 proj,
+	glm::vec3 position, glm::vec3 direction, glm::mat4 light_projection){
+	glUniformMatrix4fv(u_view,  1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(u_proj,  1, GL_FALSE, glm::value_ptr(proj));
+	// TODO: want this set to the character position and not the camera position
+	// light.position
+	glUniform3fv(u_position,    1, glm::value_ptr(position));
+	// light.direction
+	glUniform3fv(u_direction,   1, glm::value_ptr(direction));
+	glUniformMatrix4fv(u_light_projection,  1, GL_FALSE, glm::value_ptr(light_projection));
+
+}
+
+
+void BonesShader::bind()const{
+    glUseProgram(shader_program);
+}
+BonesShader::BonesShader(){
+    shader_program = link_shaders(
+            load_shader((std::string(shader_folder) + "bones_shader.fs").c_str(), GL_FRAGMENT_SHADER),
+            load_shader((std::string(shader_folder) + "bones_shader.vs").c_str(), GL_VERTEX_SHADER)
+    );
+    u_view = glGetUniformLocation(shader_program, "view");
+    u_proj = glGetUniformLocation(shader_program, "projection");
+    u_model = glGetUniformLocation(shader_program, "model");
+    for(int i = 0; i < MAX_BONES; ++i){
+        std::string name = "bones[" + std::to_string(i) +  "]";
+        std::cout << name << '\n';
+        u_bones[i] = glGetUniformLocation(shader_program, name.c_str());
+    }
+}
+
+void BonesShader::bones_uniform(const glm::mat4& bone_transform, unsigned int location)const{
+    glUniformMatrix4fv(u_bones[location], 1, GL_FALSE, glm::value_ptr(bone_transform));
+}
+void BonesShader::uniform(const glm::mat4& view, const glm::mat4& proj)const{
+    glUniformMatrix4fv(u_view, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(u_proj, 1, GL_FALSE, glm::value_ptr(proj));
+}
+
 void FlashLightShaderNew::bind(){
 	glUseProgram(shader_program);
 	//glUniform1f(u_cutoff, glm::cos(glm::radians(0.3f)));
@@ -267,13 +416,17 @@ FlashLightShaderNormalMap::FlashLightShaderNormalMap(){
 	u_cutoff = glGetUniformLocation(shader_program,   "light.cutoff");
 	u_position  = glGetUniformLocation(shader_program, "light.position");
 	u_direction = glGetUniformLocation(shader_program, "light.direction");
+	u_fov = glGetUniformLocation(shader_program, "light.fov");
+	u_col = glGetUniformLocation(shader_program, "light.col");
+	u_len = glGetUniformLocation(shader_program, "light.len");
 
 	u_view = glGetUniformLocation(shader_program, "view");
 	u_proj = glGetUniformLocation(shader_program, "projection");
 	u_model = glGetUniformLocation(shader_program, "model");
-
+	u_light_projection = glGetUniformLocation(shader_program, "light_projection");
 
 }
+
 FlashLightShaderNew::FlashLightShaderNew(){
 	shader_program = link_shaders(
 		load_shader((std::string(shader_folder) + "flashlight_new.fs").c_str(), GL_FRAGMENT_SHADER),
@@ -287,10 +440,30 @@ FlashLightShaderNew::FlashLightShaderNew(){
 	u_view = glGetUniformLocation(shader_program, "view");
 	u_proj = glGetUniformLocation(shader_program, "projection");
 	u_model = glGetUniformLocation(shader_program, "model");
+	u_light_projection = glGetUniformLocation(shader_program, "light_projection");
 
 
 }
+void FlashLightShaderNormalMap::uniform(glm::mat4 view, glm::mat4 proj, glm::vec3 position, glm::vec3 direction, float fov, float len, glm::vec3 col){
+	glUniformMatrix4fv(u_view,  1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(u_proj,  1, GL_FALSE, glm::value_ptr(proj));
+	glUniform3fv(u_position,    1, glm::value_ptr(position));
+	glUniform3fv(u_direction,   1, glm::value_ptr(direction));
+	glUniform3fv(u_col,   1, glm::value_ptr(col));
+	glUniform1f(u_fov, fov);
+	glUniform1f(u_len, len);
 
+}
+void FlashLightShaderNormalMap::uniform(glm::mat4 view, glm::mat4 proj, glm::vec3 position, glm::vec3 direction, float fov, float len, glm::vec3 col, glm::mat4 light_projection){
+	glUniformMatrix4fv(u_view,  1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(u_proj,  1, GL_FALSE, glm::value_ptr(proj));
+	glUniform3fv(u_position,    1, glm::value_ptr(position));
+	glUniform3fv(u_direction,   1, glm::value_ptr(direction));
+	glUniform3fv(u_col,   1, glm::value_ptr(col));
+	glUniform1f(u_fov, fov);
+	glUniform1f(u_len, len);
+	glUniformMatrix4fv(u_light_projection,  1, GL_FALSE, glm::value_ptr(light_projection));
+}
 
 void FlashLightShader::uniform(glm::mat4 view, glm::mat4 proj,
 				glm::vec3 position, glm::vec3 direction){
@@ -329,18 +502,42 @@ FlashLightShader::FlashLightShader(){
 
 }
 
+	void create_render_fbo_render(Component::Render& render) {
+		glGenVertexArrays(1, &render.VAO);
+		glGenBuffers(1, &render.VBO);
+		glGenBuffers(1, &render.EBO);
+
+		glBindVertexArray(render.VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, render.VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Rectangle::vertices), Rectangle::vertices, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Rectangle::indices), Rectangle::indices, GL_STATIC_DRAW);
+
+        render.triangle_count = sizeof(Rectangle::indices)/sizeof(Rectangle::indices[0]) / 3;
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+	}
+
+
+
+
+
+
 void BulletShader::bind(){
 	glUseProgram(shader_program);
 }
+
 void BulletShader::uniform(glm::mat4 view, glm::mat4 proj){
 	glUniformMatrix4fv(u_view,  1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(u_proj,  1, GL_FALSE, glm::value_ptr(proj));
 }
+
 BulletShader::BulletShader(){
-
-	std::cout << (std::string(shader_folder)).c_str();
-	std::cout << (std::string(shader_folder)).c_str();
-
 	shader_program = link_shaders(
 		load_shader((std::string(shader_folder) + "bullet_light.fs").c_str(), GL_FRAGMENT_SHADER),
 		load_shader((std::string(shader_folder) + "bullet_light.vs").c_str(), GL_VERTEX_SHADER)
@@ -373,5 +570,98 @@ SkyBoxShader::SkyBoxShader(){
 	u_view = glGetUniformLocation(shader_program, "view");
 	u_proj = glGetUniformLocation(shader_program, "proj");
 }
+
+
+}
+
+
+namespace Shader{
+    
+    namespace{
+        const std::string shadowmapvs{"/home/solidus/Assets/Shaders/shadowmap.vs"};
+        const std::string shadowmapfs{"/home/solidus/Assets/Shaders/shadowmap.fs"};
+    }
+
+    ShadowmapShader::ShadowmapShader():Shader(shadowmapvs, shadowmapfs){
+        u_light_matrix = glGetUniformLocation(shader_program, "lightMatrix");
+        u_model = glGetUniformLocation(shader_program, "model");
+    }
+
+    namespace{
+        const std::string debugvs{"/home/solidus/Assets/Shaders/shadowmap_imgui_render.vs"};
+        const std::string debugfs{"/home/solidus/Assets/Shaders/shadowmap_imgui_render.fs"};
+    }
+
+    ShadowmapDebugShader::ShadowmapDebugShader():
+        Shader(debugvs, debugfs)
+     {
+        u_depth_map = glGetUniformLocation(shader_program, "depthMap");
+        u_near = glGetUniformLocation(shader_program, "near_plane");
+        u_far = glGetUniformLocation(shader_program, "far_plane");
+
+        // stupid
+        SHADERS::create_render_fbo_render(render);
+    }
+
+
+
+}
+namespace FBO{
+
+    namespace{
+        const std::string shadowmapvs{"/home/solidus/Assets/Shaders/shadowmap.vs"};
+        const std::string shadowmapfs{"/home/solidus/Assets/Shaders/shadowmap.fs"};
+    }
+
+    ShadowmapFBO::ShadowmapFBO():
+        m_width{1024}, m_height{1024}, m_shader()
+    {
+        glGenFramebuffers(1, &m_fbo);
+
+        TextureFunctions::create_depth_texture(m_texture, m_width, m_height);
+        glBindTexture(GL_TEXTURE_2D, m_texture.id);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texture.id, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+
+	ShadowMapSingleton::ShadowMapSingleton(){
+        auto& gui = GUI_WIDGETS::TextureGui::get();
+        gui.add_render_texture("shadowmap_render", fbo.m_texture.id);
+	}
+
+    void ShadowMapSingleton::update(glm::mat4 light_projection){
+		glUseProgram(shadowmap_shader.shader_program);
+
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, 1024, 1024);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo.m_fbo);
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+
+        entt::registry& bullet_registry = Registry::get().registry;
+        entt::registry& editor_registry = EditorRegistry::get().m_registry;
+
+		glUniformMatrix4fv(shadowmap_shader.u_light_matrix,  1, GL_FALSE, glm::value_ptr(light_projection));
+		Renderer::representation_renderer_normalmap_bullet_fbo(&bullet_registry, shadowmap_shader.shader_program, shadowmap_shader.u_model);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    }
+
+
+    void create_render_fbo_texture(Component::Texture& texture){
+        glGenTextures(1, &texture.id);
+        glBindTexture(GL_TEXTURE_2D, texture.id);
+  
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE,NULL);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+    }
 
 }

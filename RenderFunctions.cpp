@@ -23,7 +23,6 @@ namespace RenderFunctions {
 
 		render.triangle_count = mesh.triangle_count;
 
-		// problems maybe from reuse of normals?
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);

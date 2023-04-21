@@ -24,6 +24,7 @@ namespace RenderTags {
 	struct _3D_TEXTURE{};
 	struct _2D_COLOR{};
 	struct _2D_DEFAULT{};
+    struct BonesRendering{};
 }
 
 #endif // TAGS_H_

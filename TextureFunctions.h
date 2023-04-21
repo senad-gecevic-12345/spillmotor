@@ -14,12 +14,14 @@ namespace SKYBOX{
 }
 
 namespace TextureFunctions{
-	//void bind_texture(Component::Texture& texture);
-	//void unbind_texture(Component::Texture& texture);
-    // inline or static maybe?
     void bind(Component::Texture& texture);
+
 	bool load_texture_jpg(std::string texture_file_path, Component::Texture& texture);
 	bool load_texture_png(const std::string& texture_file_path, Component::Texture& texture);
+
+    bool load_texture_embedded(Component::Texture& texture, unsigned int size, void* data);
+
+    void create_depth_texture(Component::Texture& texture, unsigned int width, unsigned int height);
 }
 
 #endif // TEXTUREFUNCTIONS_H_

@@ -3,78 +3,65 @@
 
 #include "Representation.h"
 
-struct Selection{
-    RepresentationKey key; 
-    bool operator==(const Selection& selection){
-        return key == selection.key;
-    }
-    Selection(RepresentationKey key):key(key){}
-};
-
-template<typename T>
-struct SelectionData{
-    T data;
-    bool operator==(const SelectionData<T>& selection){
-        if(this == &selection)
-            return 1;
-        return data == selection.data;
-    }
-    SelectionData(T data):data(data){
-    }
-};
-
+// TODO: delete this
+// no selection data have just single template
 template<typename T>
 struct SelectionList{
     int selected_id{-1};
-    std::vector<SelectionData<T>> representations;
+    std::vector<T> representations;
 
     std::size_t size(){return representations.size();}
 
-    typename std::vector<SelectionData<T>>::iterator begin(){
-        return representations.begin();
-    };
-    typename std::vector<SelectionData<T>>::iterator end(){
-        return representations.end();
-    };
-    void add_representation(T data){
-        representations.push_back(SelectionData<T>(data));
-    }
-    bool has_selection(){
-        return selected_id != -1;
-    }
-    SelectionData<T>& get_selection(){
-        return representations[selected_id];
-    }
-    void deselect(){
-        selected_id = -1;
-    }
-    void toggle_selected(SelectionData<T>& selection){
-        for(int i = 0; i < representations.size(); ++i){
-            if(representations[i] == selection){
-                if(i == selected_id){
-                    deselect();
-                }
-                else{
-                    deselect();
-                    representations[i].is_selected = 1;
-                    selected_id = i;
-                }
-                return;
-            }
-        }
+    typename std::vector<T>::iterator begin(){return representations.begin();};
+    typename std::vector<T>::iterator end(){return representations.end();};
+
+    void add_representation(T data){representations.push_back(data);}
+    bool has_selection(){return selected_id != -1;}
+    void deselect(){selected_id = -1;}
+
+    void toggle_selected(int i){
+        if(i == selected_id)
+            selected_id = -1;
+        else 
+            selected_id = i;
     }
 
-    SelectionData<T>& operator[](int i){
-        return representations[i];
+    T& get_selection(){return representations[selected_id];}
+    T& operator[](int i){return representations[i];}
+};
+
+
+// stupid just move it
+template<typename T>
+struct ReferenceSelectionList{
+    int selected_id{-1};
+    std::vector<T>* representations;
+
+    std::size_t size(){return representations->size();}
+
+    typename std::vector<T>::iterator begin(){return representations->begin();};
+    typename std::vector<T>::iterator end(){return representations->end();};
+
+    bool has_selection(){return selected_id != -1;}
+    void deselect(){selected_id = -1;}
+
+    void toggle_selected(int i){
+        if(i == selected_id)
+            selected_id = -1;
+        else
+            selected_id = i;
     }
 
+    ReferenceSelectionList(std::vector<T>* ptr):representations(ptr){}
 
+    T& get_selection(){return (*representations)[selected_id];}
+    T& operator[](int i){return (*representations)[i];}
 };
 
 struct RepresentationSelectionList{
     int selected_id{-1}; 
-    std::vector<Selection> representations;
-    using RepType = std::vector<Selection>;
+    std::vector<RepresentationKey> representations;
+    using RepType = std::vector<RepresentationKey>;
     std::size_t size(){return representations.size();}
     RepType::iterator begin(){
         return representations.begin();
@@ -83,7 +70,7 @@ struct RepresentationSelectionList{
         return representations.end();
     };
     void add_representation(RepresentationKey key){
-        representations.push_back(Selection(key));
+        representations.push_back(key);
     }
     void deselect(){
         selected_id = -1;
@@ -98,7 +85,7 @@ struct RepresentationSelectionList{
     bool has_selection(){
         return selected_id != -1;
     }
-    Selection& get_selection(){
+    RepresentationKey& get_selection(){
         assert(selected_id > -1);
         assert(selected_id < representations.size());
         return representations[selected_id];
@@ -110,26 +97,66 @@ struct RepresentationSelectionList{
         else 
             selected_id = i;
     }
-    Selection& operator[](int i){
+    RepresentationKey& operator[](int i){
         return representations[i];
     }
 };
 
+template<typename Data>
+struct RepresentationSelectionListWithAdditionalData{
+    int selected_id{-1};
+    std::vector<RepresentationKey> representations;
+    std::vector<Data> additional_data;
+    using RepType = std::vector<RepresentationKey>;
+    std::size_t size(){return representations.size();}
+    RepType::iterator begin(){
+        return representations.begin();
+    };
+    RepType::iterator end(){
+        return representations.end();
+    };
+    void add_representation(const RepresentationKey& key, const Data& data){
+        representations.push_back(RepresentationKey(key));
+        additional_data.push_back(Data(data));
+    }
+    void deselect(){
+        selected_id = -1;
+    }
+    void throw_away(int i){
+        assert(i < representations.size());
+        assert(i > -1);
+        int x = i;
+        int y = representations.size()-1;
+        std::swap(representations[x], representations[y]);
+        std::swap(additional_data[x], additional_data[y]);
 
-inline void emplace_new_mesh_to_entt(std::string file_loc_name, glm::vec3 _position, glm::vec3 _rotation, glm::vec3 _scale){
-    auto& registry = Registry::get().registry;
-    auto e = registry.create();
-    registry.emplace<Tags::RepresentationRenderNewMeshLoader>(e);
-    auto& mesh = registry.emplace<MeshLoaderNew::Mesh>(e);
-    auto& position = registry.emplace<Component::Position>(e);
-    position.pos = _position;
-    auto& rotate = registry.emplace<Component::Rotation>(e);
-    rotate.x = (float)_rotation.x; rotate.y = (float)_rotation.y; rotate.z = (float)_rotation.z;
-    auto& scale = registry.emplace<Component::Scale>(e, _scale);
+        representations.pop_back();
+        additional_data.pop_back();
 
-    bool status = MeshLoaderNew::load_mesh(file_loc_name, mesh);
-    std::cout << "\nstatus: " << status << "\n";
-}
+        selected_id = -1;
+    }
+    bool has_selection(){
+        return selected_id != -1;
+    }
+    RepresentationKey& get_selection(){
+        assert(selected_id > -1);
+        assert(selected_id < representations.size());
+        return representations[selected_id];
+    }
+    Data& get_selection_data(){
+        return additional_data[selected_id];
+    }
+
+    void toggle_selected(int i){
+        if(i == selected_id)
+            selected_id = -1;
+        else
+            selected_id = i;
+    }
+    RepresentationKey& operator[](int i){
+        return representations[i];
+    }
+};
 
 #endif // GUIHELPERS_H_
 

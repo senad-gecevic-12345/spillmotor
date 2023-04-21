@@ -1,0 +1,12 @@
+/home/solidus/Assets/UnitShapes/sphere.obj
+/home/solidus/Assets/UnitShapes/box.obj
+/home/solidus/Assets/UnitShapes/cone.obj
+/home/solidus/Assets/UnitShapes/cylinder.obj
+/home/solidus/Assets/Models/default_capsule.obj
+/home/solidus/Assets/Models/baseball_01_2k.blend/baseball_01_2k.obj
+/home/solidus/Assets/Normal/sphere_with_normal_map.obj
+/home/solidus/Downloads/rocks_ground_02_2k.blend/GROUND_SHAPE.obj
+/home/solidus/Downloads/rocks_ground_02_2k.blend/GROUND_SHAPE_FLAT.obj
+/home/solidus/Downloads/rocks_ground_02_2k.blend/AOEUAOEUAOEUAOEUaoeuaoeu.obj
+/home/solidus/Downloads/RoyalSkiesLLC-RoyalRig(BlendaKR)/RoyalSkiesLLC-ROKOKORoyalRig-Female2.9F2.gltf
+/home/solidus/Programming/LearnOpenGL/resources/objects/vampire/dancing_vampire.dae

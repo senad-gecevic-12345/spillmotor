@@ -12,6 +12,7 @@
 #include "Camera.h"
 #include <memory>
 #include "EditorRegistry.h"
+#include <array>
 
 namespace Component{
     struct Position;
@@ -20,12 +21,38 @@ namespace Component{
 
 inline btVector3 to_btVector3(glm::vec3 vec){ return btVector3{btScalar(vec.x),btScalar(vec.y),btScalar(vec.z)}; }
 
+struct Timer{
+    std::array<float, 4> expr;
+    std::array<float, 4> accumulator;
+
+    void set_expr(int index, float expr_time){
+        expr[index] = expr_time;
+        accumulator[index] = expr_time;
+    }
+
+    void update(float dt){
+        for(int i = 0; i < 4; ++i){
+            accumulator[i] -= dt;
+        }
+    }
+
+    bool is_expired(int index){
+        if(accumulator[index] <= 0.f){
+            accumulator[index] = expr[index];
+            return 1;
+        }
+        return 0;
+    }
+
+};
 
 namespace Controller{
 
     class Character{
     public:
+        // used for a destroy for the once that is controlled
         entt::entity e;
+        Timer timer;
     private:
         BULLETCOPY::btKinematicCharacterController* controller;
         btPairCachingGhostObject* ghost_obj;
@@ -38,8 +65,7 @@ namespace Controller{
 
         void copy_over(entt::registry& registry);
 
-
-        // this down own the camera so not that good
+        // this dont own the camera so not that good
         virtual void update(const NewCamera::Camera& camera){}
 
         void update_poll_keyboard(btCollisionWorld* collisionWorld, float dt, glm::vec3 vec_forward, glm::vec3 vec_straife){
@@ -55,6 +81,10 @@ namespace Controller{
 
             btVector3 forward_dir = btVector3(vec_forward.x, vec_forward.y, vec_forward.z);
             btVector3 straife_dir = btVector3(vec_straife.x, vec_straife.y, vec_straife.z);
+            // should update all
+            //
+
+            timer.update(dt);
 
             if(PollKeyboard::get().w){
                 walk_dir += forward_dir;
@@ -69,7 +99,7 @@ namespace Controller{
                 walk_dir -= straife_dir;
             }
             if(PollKeyboard::get().space){
-                if(controller->canJump())
+                if(controller->canJump() && timer.is_expired(0))
                     controller->jump(btVector3(0, 10, 0));
             }
             
@@ -95,14 +125,14 @@ namespace Controller{
         Character(Character&& other):
             e(std::move(other.e)),
             controller(std::exchange(other.controller, nullptr)),
-            ghost_obj(std::exchange(other.ghost_obj, nullptr))
-        { 
+            ghost_obj(std::exchange(other.ghost_obj, nullptr)){}
+        // which registry does this belong to. probably bullet registry
 
-        }
-
+        // is this called
         virtual ~Character();
     };
 
+    // TODO: a character should own its own camera
     // TODO: probably reading the file or something for the bullets
     // and also fix key repeat
     class ShootingCharacter : public Character{
@@ -113,14 +143,18 @@ namespace Controller{
             }
         }
         public:
-        ShootingCharacter(entt::entity e, glm::vec3 _position, glm::vec3 _rotation):Character(e, _position, _rotation){}
+        ShootingCharacter(entt::entity e, glm::vec3 _position, glm::vec3 _rotation):Character(e, _position, _rotation){
+            timer.set_expr(0, 0.7);
+        }
     };
 
     class ControllerSingleton{
     public:
         NewCamera::Camera camera;
         std::unique_ptr<Controller::Character> character;
+        Light::PerspectiveLight light;
     public:
+        bool active(){return character != nullptr;}
         void clear(){
             auto& registry = Registry::get().registry;
             if(character != nullptr)
@@ -130,14 +164,11 @@ namespace Controller{
 
         ControllerSingleton(const ControllerSingleton&)=delete;
         ControllerSingleton& operator=(const ControllerSingleton&)=delete;
-        ControllerSingleton():character(nullptr){};
+        ControllerSingleton():character(nullptr), light(20.f, camera.m_follow_pos, camera.m_front){};
         ~ControllerSingleton()=default;
 
         void update(entt::registry& registry, btCollisionWorld* world, float dt, float mouse_x, float mouse_y);
 
-        // TODO: character should be virtual and this func goes there by update
-        // check if bullet has some channels or flags for collision, or perhaps it is just something that shoulb be ignored by custom collision detection in the kinematic character
-        
         static ControllerSingleton& get(){
             static ControllerSingleton instance;
             return instance;

@@ -1,6 +1,7 @@
 #ifndef REPRESENTATION_H_
 #define REPRESENTATION_H_
 
+#include "MeshFunctions2.h"
 #include "TextureFunctions.h"
 #include "entt/entt.hpp"
 #include "BulletDynamics/Dynamics/btRigidBody.h"
@@ -11,50 +12,39 @@
 #include "Actor.h"
 #include "EditorRegistry.h"
 #include <signal.h>
+#include <functional> 
+#include <cstdio>
 
+class EditorRepresentation;
+class BulletRepresentation;
+class CharacterRepresentation;
+class ComponentSelectionBase;
+
+namespace MeshLoaderNew{
+    struct MeshRenderId;
+}
+
+namespace BulletInit{
+    struct BulletConfigData;
+};
 
 enum CharacterTypes{
     STANDARD = 0,
     SHOOTER = 1
 };
 
-inline int get_id(){
-    static int id = 0;
-    return ++id;
-}
-
 namespace Controller{
     struct Character;
 }
 
-namespace xd{
-    inline std::string unit_shapes_folder{ "/home/solidus/Assets/UnitShapes/" };
-    inline std::string unit_sphere_obj{unit_shapes_folder + "sphere.obj"};
-    inline std::string sphere_with_normal{"/home/solidus/Assets/Normal/sphere_with_normal_map.obj"};
-    inline std::string unit_sphere_mtl{unit_shapes_folder + "sphere.mtl"};
-    inline std::string unit_cone_obj{ unit_shapes_folder + "cone.obj"};
-    inline std::string unit_cone_mtl{ unit_shapes_folder + "cone.mtl"};
-    inline std::string unit_box_obj{ unit_shapes_folder + "box.obj"};
-    inline std::string unit_box_mtl{ unit_shapes_folder + "box.mtl"};
-    inline std::string unit_cylinder_obj{ unit_shapes_folder + "cylinder.obj"};
-    inline std::string unit_cylinder_mtl{ unit_shapes_folder + "cylinder.mtl"};
-    inline std::string capsule_folder{"/home/solidus/Assets/Models/"};
-    inline std::string default_capsule_obj{capsule_folder + "default_capsule.obj"};
-    inline std::string default_capsule_mtl{capsule_folder + "default_capsule.mtl"};
-};
 
-class ComponentSelectionBase;
-class ComponentSelectionPosition;
-class ComponentSelectionRotation;
-class ComponentSelectionScale;
-
-class Representation;
 
 enum RepresentationType{
     SPHERE_WITH_NORMAL,
     SPHERE,
     BOX,
-    CAPSULE
+    CAPSULE,
+    BASEBALL
 };
 
 enum RegistryOwner{
@@ -62,29 +52,29 @@ enum RegistryOwner{
     BULLETREGISTRY,
 };
 
-// check what key is initialized to
 class RepresentationKey{
 public:
     int key;
-    int registry_owner;
-    RepresentationKey(int key, int owner):key(key),registry_owner(owner){
-    }
-    
-    bool operator==(const RepresentationKey& other)
-    {
-        return key == other.key;
-    }
 
-    RepresentationKey(const RepresentationKey& other)
+    RepresentationKey(int key):key(key){}
+    
+    bool operator==(const RepresentationKey& other){return key == other.key;}
+
+    RepresentationKey(const RepresentationKey& other):
+        key(other.key){}
+
+    RepresentationKey& operator=(const RepresentationKey& other)
     {
         key = other.key;
-        registry_owner = other.registry_owner;
-    }
-   RepresentationKey& operator=(const RepresentationKey& other)
-    {
-        key = other.key;
-        registry_owner = other.registry_owner;
         return *this;
+    }
+};
+
+// can probably just return int
+template<> 
+struct std::hash<RepresentationKey>{
+    std::size_t operator()(RepresentationKey const& key)const noexcept{
+        return std::hash<int>{}(key.key);
     }
 };
 
@@ -94,7 +84,7 @@ class Sparce{
     std::vector<int> sparce;
     public:
     RepresentationKey add(const RepresentationType& type, int registry_owner){
-        int rs = representations.size();   
+        int rs = representations.size();
         int ss = [&, this](){
             for(int i = 0; i < this->sparce.size(); ++i){
                 if(this->sparce[i] == -1){
@@ -109,7 +99,7 @@ class Sparce{
 
         assert(sparce[sparce.size()-1] < (int)representations.size());
 
-        auto key = RepresentationKey(ss, registry_owner);
+        auto key = RepresentationKey(ss);
         assert(key.key < (int)sparce.size());
 
         bool ss_ok = 0;
@@ -124,7 +114,7 @@ class Sparce{
         return key;
     }
     RepresentationKey add(RepresentationType&& type, int registry_owner){
-        int rs = representations.size();   
+        int rs = representations.size();
         int ss = [&, this](){
             for(int i = 0; i < this->sparce.size(); ++i){
                 if(this->sparce[i] == -1){
@@ -139,7 +129,7 @@ class Sparce{
 
         assert(sparce[sparce.size()-1] < (int)representations.size());
 
-        auto key = RepresentationKey(ss, registry_owner);
+        auto key = RepresentationKey(ss);
 
         assert(key.key < (int)sparce.size());
         bool ss_ok = 0;
@@ -192,96 +182,143 @@ class Sparce{
 };
 
 
-
-// create something in some code, and later something else queries this to manage it
-// or delegates correctly if, for examle, it has a lifetime, then no need to manage probably
 class RepresentationBuffer{
 public:
     std::vector<RepresentationKey> keys;
 
 };
 
-
-template<typename RepresentationType>
-class RepresentationManager{
+class EditorRepresentation{
 public:
-    Sparce<RepresentationType> sparce;
-    RepresentationBuffer unmanaged_keys;
-    static RepresentationManager& get(){
-        static RepresentationManager<RepresentationType> instance;
-        return instance;
+    entt::entity e;
+
+    const entt::entity get_entity_id()const{
+        return e;
     }
 
-    RepresentationKey create_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
-    RepresentationKey create_primitive_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
-    RepresentationKey create_character_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
-    RepresentationKey create_character_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    MeshLoaderNew::MeshMetaData set_render(const std::string& file_loc_name);
 
-    RepresentationKey create_character_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, Controller::Character* character);
-    RepresentationKey create_editor_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    void remove_render(){
+        auto& registry = EditorRegistry::get().m_registry;
+        registry.remove<MeshLoaderNew::MeshRenderId>(e);
+    }
 
-    RepresentationKey forward_to_bullet(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
-    RepresentationKey forward_to_gui(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    EditorRepresentation(entt::entity e):e(e){}
 
-    RepresentationKey create_component_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
-    RepresentationType& get_representation(const RepresentationKey& key){
+    ~EditorRepresentation()=default;
+    EditorRepresentation& operator=(const EditorRepresentation& rep){
+        e = rep.e;
+        return *this;
+    }
+    EditorRepresentation(const EditorRepresentation& other):
+        e(other.e){}
+
+    friend class BulletScene;
+};
+
+
+class CharacterRepresentation{
+public:
+    std::unique_ptr<Controller::Character> character;
+public:
+    CharacterRepresentation(entt::entity e, Controller::Character* character):
+        character(character){}
+
+    CharacterRepresentation(entt::entity e, glm::vec3 position, glm::vec3 rotation):
+        character(new Controller::Character(e, position, rotation)){}
+
+    CharacterRepresentation& operator=(CharacterRepresentation&& other)noexcept
+    {
+        character = std::move(other.character);
+        return *this;
+    }
+
+    CharacterRepresentation& operator=(const CharacterRepresentation& other) = delete;
+    CharacterRepresentation(const CharacterRepresentation& other) = delete;
+    CharacterRepresentation(CharacterRepresentation&& other)noexcept
+    :
+        character {std::move(other.character)}{}
+};
+
+
+
+template<typename DerivedManager, typename Type>
+class RepresentationManagerNew{
+public:
+    Sparce<Type> sparce;
+    RepresentationBuffer unmanaged_keys;
+
+    Type& get_representation(const RepresentationKey& key){
         return sparce.get(key);
-        //return representations[sparce[key.key]];
-    };
+    }
 
     void delete_representation(const RepresentationKey& key);
 
-    // THIS NEEDS TO CHANGE
-    RepresentationKey move_to_bullet(RepresentationKey& key);
-    entt::entity create_bullet_object(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
-    // already by key probably
-    bool move_to_gui(int registry_owner, RepresentationKey& key);
+    void change_data_owner(const RepresentationKey& key, Type& type){
+        type = std::move(sparce.get(key));
+        sparce.remove(key);
+    }
 
+    static DerivedManager& get(){
+        static DerivedManager singleton;
+        return singleton;
+    }
+
+};
+
+
+class EditorRepresentationManager : public RepresentationManagerNew<EditorRepresentationManager, EditorRepresentation>{
+    public:
+
+    RepresentationKey create_representation(const std::string& file_loc_name, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+
+    RepresentationKey create_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    RepresentationKey move_to_bullet_with_data(RepresentationKey& key, btCollisionShape* collision_shape, BulletInit::BulletConfigData config);
+
+    void delete_representation(const RepresentationKey& key){
+        auto& rep = sparce.get(key);
+        auto& registry = EditorRegistry::get().m_registry;
+        registry.destroy(rep.e);
+        sparce.remove(key);
+    }
+
+    void move_to_bullet_with_data(const RepresentationKey& key, const BulletInit::BulletConfigData& config, btCollisionShape* shape);
+};
+
+
+
+
+class BulletRepresentationManager : public RepresentationManagerNew<BulletRepresentationManager, BulletRepresentation>{
+public:
+    
+    entt::entity create_bullet_object(const std::string& file_loc_name , glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    RepresentationKey forward_to_bullet(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, BulletInit::BulletConfigData config, btCollisionShape* collision_shape);
+    RepresentationKey create_primitive_representation(MeshLoaderNew::MeshRenderId render_id, btCollisionShape* collision_shape, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    RepresentationKey create_static_primitive_representation(MeshLoaderNew::MeshRenderId render_id, btCollisionShape* collision_shape, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+
+
+
+    void move_editor_representation_to_bullet(){};
+    void move_to_gui();
+};
+
+class CharacterRepresentationManager : public RepresentationManagerNew<CharacterRepresentationManager, CharacterRepresentation>{
+public:
+    RepresentationKey create_character_representation(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    RepresentationKey create_character_representation(int type, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+    void delete_representation(const RepresentationKey& key){
+        auto& rep = sparce.get(key);
+        auto& registry = Registry::get().registry;
+        registry.destroy(rep.character->e);
+        sparce.remove(key);
+    }
+    CharacterRepresentationManager(){}
 };
 
 
 
 
 class EntityMode;
-
-
-// see move_character_to_singleton
-//
-// initialize this with a pointer. this should own the pointer
-// // why does this store position and such
-class RepresentationCharacter{
-public:
-    std::unique_ptr<Controller::Character> character;
-    friend class RepresentationManager<RepresentationCharacter>;
-public:
-    RepresentationCharacter(entt::entity e, Controller::Character* character):
-        character(character)
-    {
-    }
-
-    RepresentationCharacter(entt::entity e, glm::vec3 position, glm::vec3 rotation):
-        character(new Controller::Character(e, position, rotation))
-    {
-    }
-
-    RepresentationCharacter& operator=(RepresentationCharacter&& other)noexcept
-    {
-        character = std::move(other.character);
-        return *this;
-    }
-
-    RepresentationCharacter& operator=(const RepresentationCharacter& other) = delete;
-    RepresentationCharacter(const RepresentationCharacter& other) = delete;
-    RepresentationCharacter(RepresentationCharacter&& other)noexcept
-    :
-        //position(std::move(other.position)),
-        //rotation(std::move(other.rotation)),
-        //scale(std::move(other.scale)),
-        character {std::move(other.character)}
-    {
-    }
-
-};
 
 inline void move_character_to_singleton(std::unique_ptr<Controller::Character>& ptr){
      if(Controller::ControllerSingleton::get().character != nullptr){ 
@@ -291,88 +328,24 @@ inline void move_character_to_singleton(std::unique_ptr<Controller::Character>& 
      Controller::ControllerSingleton::get().character = std::move(ptr);
 }
 
-
-class Representation{
-public:
-    int representation_type;
-    entt::entity e;
-    glm::vec3 position, rotation, scale;
-    const entt::entity get_entity_id()const{
-        return e;
-    }
-
-private:
-    Representation(int type, entt::entity e, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale):
-         representation_type(type), e(e), position(position), rotation(rotation), scale(scale)
-    {
-    }
-    friend class BulletScene;
-    friend class RepresentationManager<Representation>;
-public:
-    Representation& operator=(const Representation& rep){
-        representation_type=rep.representation_type;
-        e = rep.e;
-        position = rep.position;
-        rotation=rep.rotation;
-        scale=rep.scale;
-        return *this;
-    }
-};
-
-
-class EditorRepresentation{
-public:
-    entt::entity e;
-    glm::vec3 position, rotation, scale;
-    int representation_type;
-    const entt::entity get_entity_id()const{
-        return e;
-    }
-
-public:
-    EditorRepresentation(int type, entt::entity e, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale):
-         representation_type(type), position(position), rotation(rotation), scale(scale), e(e)
-    {
-    }
-    friend class BulletScene;
-public:
-    EditorRepresentation& operator=(const EditorRepresentation& rep){
-        e = rep.e;
-        position = rep.position;
-        rotation=rep.rotation;
-        scale=rep.scale;
-        representation_type=rep.representation_type;
-        return *this;
-    }
-    EditorRepresentation(const EditorRepresentation& rep){
-        e = rep.e;
-        position = rep.position;
-        rotation=rep.rotation;
-        scale=rep.scale;
-        representation_type=rep.representation_type;
-    }
-};
-
 class BulletRepresentation{
     entt::entity e;
-    int representation_type;
 public:
     const entt::entity get_entity_id()const{
         return e;
     }
-public:
-    BulletRepresentation(entt::entity e, int type):e(e), representation_type(type){}
-    friend class BulletScene;
-    friend class RepresentationManager<BulletRepresentation>;
-public:
+    BulletRepresentation(entt::entity e):e(e){}
+    ~BulletRepresentation()=default;
     BulletRepresentation& operator=(const BulletRepresentation& rep){ 
-        e = rep.e; representation_type = rep.representation_type; 
+        e = rep.e; 
         return *this;
     }
+
+    friend class BulletScene;
+    friend class BulletRepresentationManager;
 };
 
 
 
 
 #endif // REPRESENTATION_H_
-

@@ -9,14 +9,16 @@ double Window::mouse_x{ 0 };
 double Window::mouse_y{ 0 };
 bool Window::cursor{ 1 };
 GLFWwindow* Window::window{ nullptr };
-Keyboard* Keyboard::keyboard{ nullptr };
-PollKeyboard* PollKeyboard::instance{ nullptr };
 std::unordered_map<int, bool> Window::key_map;
 
 void Window::swap_buffers() { glfwSwapBuffers(window); }
 void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	Window::width = width;
 	Window::height = height;
+	glViewport(0, 0, width, height);
+}
+
+void Window::update_viewport(){
 	glViewport(0, 0, width, height);
 }
 
@@ -106,14 +108,6 @@ int Window::init() {
 	if (is_init)return -1;
 	if (!glfwInit())return -1;
 
-	/*
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	*/
-
-	// top of sphere not rendering correctly
-	// seems sampling affect sampling
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	window = glfwCreateWindow(width, height, "Window", NULL, NULL);
 	if (!window) {
@@ -129,11 +123,8 @@ int Window::init() {
 	glfwSetMouseButtonCallback(window, Window::mouse_button_callback);
 	glfwSetKeyCallback(window, Window::keyboard_callback);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
-	// GLFW_STICKY_KEYS 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glEnable(GL_MULTISAMPLE);
-	//glfwSwapInterval(120);
 	is_init = true;
 	return 1;
 }

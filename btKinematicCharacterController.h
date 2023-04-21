@@ -22,6 +22,8 @@ subject to the following restrictions:
 
 #include "BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h"
 
+// TODO: seems like if jumping on a low ceiling register it as a normal hit and allows for jump again
+
 
 // altered bullet code
 

@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "World.h"
+
 glm::mat4 make_view_matrix(glm::vec3 pos, glm::vec3 front, glm::vec3 up) {
 	return glm::lookAt(pos, pos + front, up);
 }

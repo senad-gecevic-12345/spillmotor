@@ -16,6 +16,13 @@ namespace ApplyForceFunctions{
 
 
 namespace Component {
+
+
+    struct AnimationController{
+        int animation_location={-1};
+        int playing_animation={-1};
+        int no_animations={0};
+    };
     struct _3DObjectData{
         bool has_bullet_representation;
         bool can_dynamic_edit;
@@ -36,6 +43,10 @@ namespace Component {
 	struct ActivateTime {
 		double time;
 	};
+
+    struct OpenGLRotation{
+        glm::mat4 rotation;
+    };
 
 struct Rotation {
     union{

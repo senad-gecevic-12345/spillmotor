@@ -2,8 +2,6 @@
 #define CAMERA_H_
 
 
-// after turing the camera either correct or not. dont know about that turn as should be restricted
-
 #include "glm/glm.hpp"
 #include "glm/matrix.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -20,8 +18,6 @@ glm::mat4	make_projection_matrix(float fov, int width, int height);
 glm::mat4	make_view_matrix(glm::vec3 pos, glm::vec3 front, glm::vec3 up);
 namespace ControllerCameraFunctions{
 
-// just copy over the data
-// create a custom actor with virtual functions and another data path to attach this or somethig
 struct CameraData {
     float m_last_x{0};
     float m_last_y{0};
@@ -31,10 +27,6 @@ struct CameraData {
 };
 
 void mouse_update(double xposIn, double yposIn, CameraData& camera);
-
-
-// this is needed
-// the position update is not good at all
 
 inline glm::mat4 get_fps_camera(double x, double y, double sensitivity, const CameraData& camera_data_2, glm::vec3 camera_pos) {
 
@@ -53,7 +45,6 @@ inline glm::mat4 get_fps_camera(double x, double y, double sensitivity, const Ca
 }
 
 namespace ControllerCameraFunctions{
-    // wtf is this even
 struct CameraPosTemp{
     double last_x{0}, last_y{0};
     float rot_x{0}, rot_y{0};
@@ -64,7 +55,6 @@ struct CameraPosTemp{
 
 };
 
-// need just the directoion or something
 glm::vec3 get_update_camera_pos(const CameraData& data, CameraPosTemp& pos_data);
 
 }
@@ -102,8 +92,8 @@ namespace NewCamera{
             last_x = mouse_x;
             last_y = mouse_y;
 
-            if(m_pitch > 20.f){
-                m_pitch = 20.f;
+            if(m_pitch > 85.f){
+                m_pitch = 85.f;
             }
             if(m_pitch < -0.f){
                 m_pitch = -0.f;

@@ -6,6 +6,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+namespace SHADERS{
+    struct ShadowMapShader;
+    struct BonesShader;
+}
+namespace Shader{
+    struct ShadowmapFBO;
+}
 namespace Renderer{
 
 void bullet_temp_renderer(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
@@ -13,6 +20,11 @@ void bullet_temp_renderer_single(entt::registry* registry, unsigned int shader_p
 void representation_renderer(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
 void representation_renderer_new_mesh_render(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
 void representation_renderer_normalmap(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
+void representation_renderer_normalmap_bullet_fbo(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
+void representation_renderer_normalmap_bullet(entt::registry* registry, unsigned int shader_program, unsigned int model_loc);
+void fbo_shadow_map_renderer(entt::registry* registry, const Shader::ShadowmapFBO& shader);
+void bones_render(entt::registry* registry, const SHADERS::BonesShader& shader);
+
 }
 
 namespace BULLET_SHADER_LIGHTS{ 
@@ -28,7 +40,6 @@ namespace BULLET_SHADER_LIGHTS{
         glUniform3f(diffuse_direction_loc, dir.x, dir.y, dir.z);
         glUniform3f(diffuse_color_loc, col.x, col.y, col.z);
     }
-
     struct FlashLight{
         glm::vec3 position;
         glm::vec3 direction;

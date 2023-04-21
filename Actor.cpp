@@ -4,7 +4,6 @@
 #include "Components.h"
 
 namespace Controller{
-    // these are not simulated. wtf
     void ShootingCharacter::temp_shoot_bullet(const NewCamera::Camera& camera){
         auto& registry = Registry::get().registry;
         auto character_position = registry.get<Component::Position>(e);
@@ -23,7 +22,21 @@ namespace Controller{
         front = glm::normalize(front);
         glm::vec3 straife = -glm::cross(front, up);
 
+        FBO::ShadowMapSingleton& shadowmap = FBO::ShadowMapSingleton::get();
+        light.update(front, camera.m_follow_pos);
 
+        glm::mat4 glm_proj = glm::perspective(45.f, 1920.f / 1080.f, 0.1f, 500.f);
+
+        float near_plane = 1.0f, far_plane = 7.5f;
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+
+        glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f), 
+                              glm::vec3( 0.0f, 0.0f,  0.0f), 
+                              glm::vec3( 0.0f, 1.0f,  0.0f));
+
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;         
+
+        shadowmap.update(light.get_light_matrix());
 
         if(character != nullptr){ 
             character->update_poll_keyboard(world, dt, front, straife); 
@@ -65,7 +78,6 @@ namespace Controller{
         t.setIdentity();
         t.setOrigin(position);
         auto set_rotation = btQuaternion();
-        //set_rotation.setEulerZYX(btScalar(rotation.z()), btScalar(rotation.y()), btScalar(rotation.x()));
         set_rotation.setEulerZYX(btScalar(0), btScalar(0), btScalar(0));
         t.setRotation(set_rotation);
         ghost_obj = new btPairCachingGhostObject();
